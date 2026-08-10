@@ -1,0 +1,6 @@
+{
+  "name": "Procedural Live Wallpaper",
+  "description": "Ultra-lightweight procedural live wallpaper app under 1 MB featuring interactive touch physics, real-time shaders, and customizable neon particle engines.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
