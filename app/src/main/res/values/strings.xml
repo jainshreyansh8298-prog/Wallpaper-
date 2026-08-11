@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Live Wallpaper</string>
+    <string name="app_name">Procedural Live Wallpaper</string>
     <string name="wallpaper_description">Ultra-lightweight procedural wallpaper with interactive touch physics and customizable particle matrix.</string>
 </resources>

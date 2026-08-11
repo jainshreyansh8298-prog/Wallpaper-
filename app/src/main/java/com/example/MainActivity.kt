@@ -92,6 +92,11 @@ import com.example.wallpaper.WallpaperRenderer
 import com.example.wallpaper.WallpaperSettingsStore
 import kotlinx.coroutines.delay
 
+private val NothingRed = Color(0xFFFF0037)
+private val NothingDark = Color(0xFF000000)
+private val NothingCardBg = Color(0xFF0C0C0C)
+private val NothingCardBorder = Color(0xFF222222)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,7 +105,7 @@ class MainActivity : ComponentActivity() {
             MyApplicationTheme {
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    containerColor = CyberDarkBg
+                    containerColor = NothingDark
                 ) { padding ->
                     LiveWallpaperAppScreen(
                         modifier = Modifier.padding(padding),
@@ -121,7 +126,6 @@ class MainActivity : ComponentActivity() {
             }
             startActivity(intent)
         } catch (e: Exception) {
-            // Fallback for devices without standard intent
             try {
                 val intent = Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)
                 startActivity(intent)
@@ -141,7 +145,6 @@ fun LiveWallpaperAppScreen(
     val context = LocalContext.current
     var config by remember { mutableStateOf(WallpaperSettingsStore.loadConfig(context)) }
 
-    // Save config updates automatically to SharedPreferences
     val updateConfig = { newConfig: WallpaperConfig ->
         config = newConfig
         WallpaperSettingsStore.saveConfig(context, newConfig)
@@ -156,7 +159,7 @@ fun LiveWallpaperAppScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // --- Header Banner ---
+        // --- Nothing OS Style Header ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -164,14 +167,14 @@ fun LiveWallpaperAppScreen(
         ) {
             Column {
                 Text(
-                    text = "PROCEDURAL",
+                    text = "● NOTHING // SIMULATOR",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
-                    color = NeonCyan,
+                    color = NothingRed,
                     letterSpacing = 2.sp
                 )
                 Text(
-                    text = "Live Wallpaper",
+                    text = "Physics & Matrix OS",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
@@ -181,8 +184,8 @@ fun LiveWallpaperAppScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFF132A3A))
-                    .border(1.dp, NeonCyan.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                    .background(Color(0xFF161616))
+                    .border(1.dp, NothingRed.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
                     .padding(horizontal = 10.dp, vertical = 6.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -190,28 +193,28 @@ fun LiveWallpaperAppScreen(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(NeonEmerald)
+                            .background(NothingRed)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "APK < 0.4 MB",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        color = NeonCyan
+                        color = Color.White
                     )
                 }
             }
         }
 
-        // --- Interactive Preview Box ---
+        // --- Interactive Preview Card ---
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(260.dp)
+                .height(280.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .border(1.5.dp, CyberCardBorder, RoundedCornerShape(16.dp))
+                .border(1.5.dp, NothingCardBorder, RoundedCornerShape(16.dp))
                 .testTag("wallpaper_preview_card"),
-            colors = CardDefaults.cardColors(containerColor = CyberCardBg)
+            colors = CardDefaults.cardColors(containerColor = NothingCardBg)
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 LiveWallpaperInteractiveCanvas(
@@ -219,25 +222,24 @@ fun LiveWallpaperAppScreen(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Overlay hint banner
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(12.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color.Black.copy(alpha = 0.6f))
+                        .background(Color.Black.copy(alpha = 0.7f))
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.TouchApp,
                             contentDescription = "Interactive Touch",
-                            tint = NeonCyan,
+                            tint = NothingRed,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Interactive Touch Preview",
+                            text = "Touch & Slide Interactive Canvas",
                             fontSize = 11.sp,
                             color = Color.White
                         )
@@ -246,18 +248,18 @@ fun LiveWallpaperAppScreen(
             }
         }
 
-        // --- Apply Live Wallpaper Action Button ---
+        // --- Apply Live Wallpaper Button (Lock Screen & Home Screen) ---
         Button(
             onClick = onApplyWallpaper,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(54.dp)
+                .height(56.dp)
                 .testTag("apply_wallpaper_button"),
             colors = ButtonDefaults.buttonColors(
-                containerColor = NeonCyan,
-                contentColor = Color.Black
+                containerColor = NothingRed,
+                contentColor = Color.White
             ),
-            shape = RoundedCornerShape(14.dp)
+            shape = RoundedCornerShape(12.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -270,33 +272,112 @@ fun LiveWallpaperAppScreen(
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "SET AS LIVE WALLPAPER",
+                    text = "SET AS LOCK & HOME WALLPAPER",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    letterSpacing = 0.5.sp
+                    fontSize = 14.sp,
+                    letterSpacing = 0.8.sp
                 )
+            }
+        }
+
+        // --- Unlock Tracker Telemetry Panel ---
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = NothingCardBg),
+            shape = RoundedCornerShape(16.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, NothingRed.copy(alpha = 0.5f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Bolt,
+                            contentDescription = null,
+                            tint = NothingRed,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "UNLOCK BEAD CONTAINER STATS",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            letterSpacing = 1.sp
+                        )
+                    }
+
+                    Button(
+                        onClick = {
+                            WallpaperSettingsStore.resetUnlockStats(context)
+                            config = WallpaperSettingsStore.loadConfig(context)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF222222),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(text = "RESET", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${config.unlockCount}",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = NothingRed
+                        )
+                        Text(text = "Unlocks & Beads", fontSize = 11.sp, color = Color.Gray)
+                    }
+
+                    val elapsedSec = ((System.currentTimeMillis() - config.trackedTimeStartMs) / 1000L).coerceAtLeast(0L)
+                    val hrs = elapsedSec / 3600
+                    val mins = (elapsedSec % 3600) / 60
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${hrs}h ${mins}m",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White
+                        )
+                        Text(text = "Time Tracked", fontSize = 11.sp, color = Color.Gray)
+                    }
+                }
             }
         }
 
         // --- Color Preset Selector ---
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = CyberCardBg),
+            colors = CardDefaults.cardColors(containerColor = NothingCardBg),
             shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, CyberCardBorder)
+            border = androidx.compose.foundation.BorderStroke(1.dp, NothingCardBorder)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Palette,
                         contentDescription = null,
-                        tint = NeonCyan,
+                        tint = NothingRed,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "COLOR PRESETS",
-                        fontSize = 13.sp,
+                        text = "COLOR PALETTES",
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         letterSpacing = 1.sp
@@ -314,7 +395,7 @@ fun LiveWallpaperAppScreen(
                     ColorPreset.values().forEach { preset ->
                         val isSelected = config.colorPreset == preset
                         val borderColor by animateColorAsState(
-                            if (isSelected) NeonCyan else Color.Transparent,
+                            if (isSelected) NothingRed else Color.Transparent,
                             label = "border"
                         )
 
@@ -351,9 +432,9 @@ fun LiveWallpaperAppScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = preset.title,
-                                    fontSize = 12.sp,
+                                    fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (isSelected) NeonCyan else Color.White
+                                    color = if (isSelected) NothingRed else Color.White
                                 )
                             }
                         }
@@ -365,22 +446,22 @@ fun LiveWallpaperAppScreen(
         // --- Effect Mode Selector ---
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = CyberCardBg),
+            colors = CardDefaults.cardColors(containerColor = NothingCardBg),
             shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, CyberCardBorder)
+            border = androidx.compose.foundation.BorderStroke(1.dp, NothingCardBorder)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.ElectricBolt,
                         contentDescription = null,
-                        tint = NeonPurple,
+                        tint = NothingRed,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "PROCEDURAL SHADER MODES",
-                        fontSize = 13.sp,
+                        text = "EFFECT & MATRIX MODES",
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         letterSpacing = 1.sp
@@ -392,8 +473,8 @@ fun LiveWallpaperAppScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     EffectMode.values().forEach { mode ->
                         val isSelected = config.effectMode == mode
-                        val cardBg = if (isSelected) Color(0xFF1E1035) else Color(0xFF0F172A)
-                        val border = if (isSelected) NeonPurple else Color(0xFF1E293B)
+                        val cardBg = if (isSelected) Color(0xFF1E060A) else Color(0xFF121212)
+                        val border = if (isSelected) NothingRed else Color(0xFF222222)
 
                         Box(
                             modifier = Modifier
@@ -413,9 +494,9 @@ fun LiveWallpaperAppScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = mode.title,
-                                        fontSize = 14.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) NeonPurple else Color.White
+                                        color = if (isSelected) NothingRed else Color.White
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
@@ -429,7 +510,7 @@ fun LiveWallpaperAppScreen(
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = "Selected",
-                                        tint = NeonPurple,
+                                        tint = NothingRed,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -440,25 +521,25 @@ fun LiveWallpaperAppScreen(
             }
         }
 
-        // --- Controls & Performance Tuning ---
+        // --- Controls & Toggles ---
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = CyberCardBg),
+            colors = CardDefaults.cardColors(containerColor = NothingCardBg),
             shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, CyberCardBorder)
+            border = androidx.compose.foundation.BorderStroke(1.dp, NothingCardBorder)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Speed,
                         contentDescription = null,
-                        tint = NeonPink,
+                        tint = NothingRed,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "PHYSICS & PERFORMANCE TUNING",
-                        fontSize = 13.sp,
+                        text = "PHYSICS & INTERACTION CONTROLS",
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         letterSpacing = 1.sp
@@ -467,168 +548,38 @@ fun LiveWallpaperAppScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Particle Count Slider
-                Text(
-                    text = "Particle Density: ${config.particleCount} particles",
-                    fontSize = 13.sp,
-                    color = Color.White
-                )
-                Slider(
-                    value = config.particleCount.toFloat(),
-                    onValueChange = { updateConfig(config.copy(particleCount = it.toInt())) },
-                    valueRange = 30f..250f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = NeonPink,
-                        activeTrackColor = NeonPink
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Motion Speed Slider
-                Text(
-                    text = "Motion Speed: ${"%.1f".format(config.speedScale)}x",
-                    fontSize = 13.sp,
-                    color = Color.White
-                )
-                Slider(
-                    value = config.speedScale,
-                    onValueChange = { updateConfig(config.copy(speedScale = it)) },
-                    valueRange = 0.2f..2.5f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = NeonCyan,
-                        activeTrackColor = NeonCyan
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Touch Ripple Intensity
-                Text(
-                    text = "Touch Ripple Impact: ${"%.1f".format(config.rippleIntensity)}x",
-                    fontSize = 13.sp,
-                    color = Color.White
-                )
-                Slider(
-                    value = config.rippleIntensity,
-                    onValueChange = { updateConfig(config.copy(rippleIntensity = it)) },
-                    valueRange = 0.2f..2.5f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = NeonEmerald,
-                        activeTrackColor = NeonEmerald
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Target FPS Cap Buttons
-                Text(
-                    text = "FPS Cap & Battery Saver",
-                    fontSize = 13.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
-                        15 to "15 FPS (Saver)",
-                        30 to "30 FPS (Balanced)",
-                        60 to "60 FPS (Ultra)"
-                    ).forEach { (fps, label) ->
-                        val isSelected = config.targetFps == fps
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) NeonCyan else Color(0xFF0F172A))
-                                .border(
-                                    1.dp,
-                                    if (isSelected) NeonCyan else Color(0xFF1E293B),
-                                    RoundedCornerShape(10.dp)
-                                )
-                                .clickable { updateConfig(config.copy(targetFps = fps)) }
-                                .padding(vertical = 10.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = label,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isSelected) Color.Black else Color.White
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Toggle Trail Effects
+                // Drag Painting Mode Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Touch Particle Trails",
+                            text = "Touch Painting Mode",
                             fontSize = 13.sp,
                             color = Color.White,
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "Spawns glowing tail particles on finger drag",
+                            text = "Paints persistent glowing particle trails on drag",
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
                     }
                     Switch(
-                        checked = config.showTouchTrails,
-                        onCheckedChange = { updateConfig(config.copy(showTouchTrails = it)) },
+                        checked = config.paintingMode,
+                        onCheckedChange = { updateConfig(config.copy(paintingMode = it)) },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = NeonCyan,
-                            checkedTrackColor = Color(0xFF003840)
+                            checkedThumbColor = NothingRed,
+                            checkedTrackColor = Color(0xFF4A0010)
                         )
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Toggle Constellation Connections
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Constellation Vectors",
-                            fontSize = 13.sp,
-                            color = Color.White,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            text = "Connects nearby particles with vector mesh lines",
-                            fontSize = 11.sp,
-                            color = Color.Gray
-                        )
-                    }
-                    Switch(
-                        checked = config.enableWebConnections,
-                        onCheckedChange = { updateConfig(config.copy(enableWebConnections = it)) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = NeonPurple,
-                            checkedTrackColor = Color(0xFF2E1065)
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Toggle Zero-Gravity Mode
+                // Zero-Gravity Mode Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -651,15 +602,15 @@ fun LiveWallpaperAppScreen(
                         checked = config.zeroGravityMode,
                         onCheckedChange = { updateConfig(config.copy(zeroGravityMode = it)) },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = NeonAmber,
-                            checkedTrackColor = Color(0xFF451A03)
+                            checkedThumbColor = NothingRed,
+                            checkedTrackColor = Color(0xFF4A0010)
                         )
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Toggle Tactile Haptics
+                // Tactile Haptics Switch
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -673,7 +624,7 @@ fun LiveWallpaperAppScreen(
                             fontWeight = FontWeight.Medium
                         )
                         Text(
-                            text = "Subtle vibration ticks on touch ripple impacts",
+                            text = "Vibration ticks on touch ripple impact",
                             fontSize = 11.sp,
                             color = Color.Gray
                         )
@@ -682,62 +633,10 @@ fun LiveWallpaperAppScreen(
                         checked = config.enableHaptics,
                         onCheckedChange = { updateConfig(config.copy(enableHaptics = it)) },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = NeonPink,
-                            checkedTrackColor = Color(0xFF500724)
+                            checkedThumbColor = NothingRed,
+                            checkedTrackColor = Color(0xFF4A0010)
                         )
                     )
-                }
-            }
-        }
-
-        // --- System Health Card ---
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF090D16)),
-            shape = RoundedCornerShape(16.dp),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF1E293B))
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Bolt,
-                        contentDescription = null,
-                        tint = NeonEmerald,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "0% Assets", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text(text = "100% Procedural", fontSize = 10.sp, color = Color.Gray)
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Memory,
-                        contentDescription = null,
-                        tint = NeonCyan,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "~12 MB RAM", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text(text = "Low Memory", fontSize = 10.sp, color = Color.Gray)
-                }
-
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.ElectricBolt,
-                        contentDescription = null,
-                        tint = NeonAmber,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(text = "< 1% CPU", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                    Text(text = "Auto-Pause", fontSize = 10.sp, color = Color.Gray)
                 }
             }
         }

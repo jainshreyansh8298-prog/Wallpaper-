@@ -85,6 +85,20 @@ class ProceduralWallpaperService : WallpaperService() {
             }
         }
 
+        private val unlockReceiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(context: android.content.Context?, intent: android.content.Intent?) {
+                if (intent?.action == android.content.Intent.ACTION_USER_PRESENT || intent?.action == android.content.Intent.ACTION_SCREEN_ON) {
+                    val contextRef = context ?: applicationContext
+                    val newCount = WallpaperSettingsStore.incrementUnlockCount(contextRef)
+                    reloadConfig()
+                    renderer.spawnUnlockBead()
+                    if (renderer.config.enableHaptics) {
+                        triggerHaptic()
+                    }
+                }
+            }
+        }
+
         override fun onCreate(surfaceHolder: SurfaceHolder) {
             super.onCreate(surfaceHolder)
             setTouchEventsEnabled(true)
@@ -95,6 +109,17 @@ class ProceduralWallpaperService : WallpaperService() {
             val prefs = WallpaperSettingsStore.getPrefs(applicationContext)
             prefs.registerOnSharedPreferenceChangeListener(this)
 
+            // Register unlock receiver
+            val filter = android.content.IntentFilter().apply {
+                addAction(android.content.Intent.ACTION_USER_PRESENT)
+                addAction(android.content.Intent.ACTION_SCREEN_ON)
+            }
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(unlockReceiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(unlockReceiver, filter)
+            }
+
             // Load initial config
             reloadConfig()
         }
@@ -104,6 +129,11 @@ class ProceduralWallpaperService : WallpaperService() {
             stopEngine()
             val prefs = WallpaperSettingsStore.getPrefs(applicationContext)
             prefs.unregisterOnSharedPreferenceChangeListener(this)
+            try {
+                unregisterReceiver(unlockReceiver)
+            } catch (e: Exception) {
+                // Ignore receiver unregister error
+            }
         }
 
         override fun onVisibilityChanged(visible: Boolean) {

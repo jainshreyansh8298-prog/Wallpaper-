@@ -47,6 +47,18 @@ class Particle(
     var isTrail: Boolean = false
 )
 
+class WaterBead(
+    var x: Float = 0f,
+    var y: Float = 0f,
+    var vx: Float = 0f,
+    var vy: Float = 0f,
+    var radius: Float = 12f,
+    var color: Int = Color.CYAN,
+    var alpha: Float = 1f,
+    var phase: Float = 0f,
+    var glow: Float = 1f
+)
+
 class WallpaperRenderer {
 
     var config: WallpaperConfig = WallpaperConfig()
@@ -77,21 +89,31 @@ class WallpaperRenderer {
         style = Paint.Style.STROKE
         strokeWidth = 3f
     }
+    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textSize = 32f
+    }
     private val wavePath = Path()
     private val tempPath = Path()
 
     // Multi-touch tracking (supports up to 10 fingers)
     private val maxTouchPoints = 10
     private val touchPoints = Array(maxTouchPoints) { TouchPoint() }
+    private val lastRippleDist = FloatArray(maxTouchPoints) { 0f }
 
     // Pre-allocated Ripple Pool
-    private val maxRipples = 25
+    private val maxRipples = 35
     private val ripples = Array(maxRipples) { RippleWave() }
     private var rippleNextIndex = 0
 
     // Pre-allocated Particle Pool
     private var maxParticles = 200
     private var particles = Array(maxParticles) { Particle() }
+
+    // Pre-allocated Water Beads Pool
+    private val maxBeads = 100
+    private val waterBeads = Array(maxBeads) { WaterBead() }
+    private var activeBeadCount = 0
 
     // Listener for tactile haptic feedback triggers
     var onHapticFeedbackNeeded: (() -> Unit)? = null
@@ -114,6 +136,7 @@ class WallpaperRenderer {
             width = maxOf(1, w)
             height = maxOf(1, h)
             resetParticlePositions()
+            syncBeadsWithConfig()
         }
     }
 
@@ -123,6 +146,41 @@ class WallpaperRenderer {
             particles = Array(maxParticles) { Particle() }
         }
         resetParticlePositions()
+        syncBeadsWithConfig()
+    }
+
+    fun spawnUnlockBead() {
+        val bead = waterBeads[activeBeadCount % maxBeads]
+        bead.x = (0.2f + Math.random().toFloat() * 0.6f) * width
+        bead.y = -50f
+        bead.vx = ((Math.random() - 0.5) * 80).toFloat()
+        bead.vy = 200f + (Math.random() * 150).toFloat()
+        bead.radius = (14f + Math.random() * 12f).toFloat()
+        bead.color = if (Math.random() > 0.4) 0xFFFF0037.toInt() else 0xFF00F0FF.toInt()
+        bead.alpha = 1f
+        bead.phase = (Math.random() * Math.PI * 2).toFloat()
+        bead.glow = 1.5f
+        activeBeadCount = (activeBeadCount + 1).coerceAtMost(maxBeads)
+    }
+
+    private fun syncBeadsWithConfig() {
+        val count = config.unlockCount.coerceIn(1, maxBeads)
+        activeBeadCount = count
+        val waterLine = height * 0.35f
+        for (i in 0 until count) {
+            val b = waterBeads[i]
+            if (b.y <= 0f || b.x <= 0f) {
+                b.x = (0.1f + (i % 8) * 0.11f) * width
+                b.y = waterLine + (i / 8) * 40f + 50f
+                b.vx = ((Math.random() - 0.5) * 20).toFloat()
+                b.vy = ((Math.random() - 0.5) * 20).toFloat()
+                b.radius = (12f + (i % 5) * 3f)
+                b.color = if (i % 3 == 0) 0xFFFF0037.toInt() else 0xFFFFFFFF.toInt()
+                b.alpha = 1f
+                b.phase = i * 0.5f
+                b.glow = 1f
+            }
+        }
     }
 
     private fun resetParticlePositions() {
@@ -180,14 +238,20 @@ class WallpaperRenderer {
                     val x = event.getX(i)
                     val y = event.getY(i)
 
-                    for (tp in touchPoints) {
+                    for (idx in touchPoints.indices) {
+                        val tp = touchPoints[idx]
                         if (tp.active && tp.id == id) {
                             val dx = x - tp.x
                             val dy = y - tp.y
                             val dist = sqrt(dx * dx + dy * dy)
 
-                            if (dist > 15f && config.showTouchTrails) {
-                                spawnTrailParticle(x, y)
+                            if (dist > 25f) {
+                                // Trigger continuous ripple on slide / drag
+                                triggerRipple(x, y, tp.pressure * 0.7f)
+
+                                if (config.showTouchTrails || config.paintingMode || config.effectMode == EffectMode.PAINTING_CANVAS) {
+                                    spawnTrailParticle(x, y)
+                                }
                             }
 
                             tp.x = x
@@ -345,6 +409,57 @@ class WallpaperRenderer {
                 }
             }
         }
+
+        // Update Water Beads physics for Container Mode
+        val count = config.unlockCount.coerceIn(1, maxBeads)
+        val waterLine = height * 0.32f
+        for (i in 0 until count) {
+            val b = waterBeads[i]
+            b.phase += deltaSec * 2f
+
+            // Gravity & Buoyancy
+            if (b.y < waterLine) {
+                b.vy += 600f * deltaSec // Gravity in air
+            } else {
+                val depth = (b.y - waterLine).coerceAtLeast(0f)
+                val buoyancy = 800f + depth * 0.5f
+                b.vy -= buoyancy * deltaSec // Upward fluid buoyancy
+                b.vy *= 0.94f // Fluid damping
+                b.vx *= 0.96f
+            }
+
+            b.x += b.vx * deltaSec
+            b.y += b.vy * deltaSec
+
+            // Container boundary bouncing
+            if (b.x < 30f) {
+                b.x = 30f
+                b.vx = abs(b.vx) * 0.7f
+            } else if (b.x > width - 30f) {
+                b.x = width - 30f
+                b.vx = -abs(b.vx) * 0.7f
+            }
+
+            if (b.y > height - 60f) {
+                b.y = height - 60f
+                b.vy = -abs(b.vy) * 0.5f
+            }
+
+            // Touch interaction with water beads
+            for (tp in touchPoints) {
+                if (tp.active) {
+                    val dx = b.x - tp.x
+                    val dy = b.y - tp.y
+                    val distSq = dx * dx + dy * dy
+                    if (distSq < 250f * 250f && distSq > 1f) {
+                        val dist = sqrt(distSq)
+                        val force = (1f - dist / 250f) * 600f
+                        b.vx += (dx / dist) * force * deltaSec
+                        b.vy += (dy / dist) * force * deltaSec
+                    }
+                }
+            }
+        }
     }
 
     fun render(canvas: Canvas, measuredFps: Int = 60) {
@@ -355,6 +470,9 @@ class WallpaperRenderer {
 
         // 2. Render Selected Effect Mode
         when (config.effectMode) {
+            EffectMode.NOTHING_MATRIX -> renderNothingMatrix(canvas)
+            EffectMode.WATER_BEAD_CONTAINER -> renderWaterBeadContainer(canvas)
+            EffectMode.PAINTING_CANVAS -> renderPaintingCanvas(canvas)
             EffectMode.QUANTUM_GRID -> renderQuantumGrid(canvas)
             EffectMode.NEON_PARTICLES -> renderNeonParticles(canvas)
             EffectMode.AURORA_FLOW -> renderAuroraFlow(canvas)
@@ -366,6 +484,175 @@ class WallpaperRenderer {
 
         // 4. Render Active Touch Glows
         renderTouchGlows(canvas)
+    }
+
+    private fun renderNothingMatrix(canvas: Canvas) {
+        val dotSpacing = 36f
+        val cols = (width / dotSpacing).toInt() + 1
+        val rows = (height / dotSpacing).toInt() + 1
+
+        gridPaint.style = Paint.Style.FILL
+
+        val time = globalTimeSec
+
+        for (r in 0 until rows) {
+            val y = r * dotSpacing
+            for (c in 0 until cols) {
+                val x = c * dotSpacing
+
+                var radius = 2.2f
+                var color = 0xFF222222.toInt() // Default dark matrix dot
+
+                // Calculate ripple & touch reaction
+                var isTouched = false
+                for (tp in touchPoints) {
+                    if (tp.active) {
+                        val dx = x - tp.x
+                        val dy = y - tp.y
+                        val dist = sqrt(dx * dx + dy * dy)
+                        if (dist < 180f) {
+                            radius = 4.5f * (1f - dist / 180f) + 2.2f
+                            color = if ((r + c) % 5 == 0) 0xFFFF0037.toInt() else 0xFFFFFFFF.toInt()
+                            isTouched = true
+                        }
+                    }
+                }
+
+                if (!isTouched) {
+                    for (ripple in ripples) {
+                        if (ripple.active) {
+                            val dx = x - ripple.x
+                            val dy = y - ripple.y
+                            val dist = sqrt(dx * dx + dy * dy)
+                            val rippleDist = abs(dist - ripple.radius)
+                            if (rippleDist < 60f) {
+                                val factor = (1f - rippleDist / 60f) * ripple.alpha
+                                radius = 2.2f + factor * 4f
+                                color = if ((r + c) % 3 == 0) 0xFFFF0037.toInt() else 0xFFFFFFFF.toInt()
+                            }
+                        }
+                    }
+                }
+
+                gridPaint.color = color
+                canvas.drawCircle(x, y, radius, gridPaint)
+            }
+        }
+
+        // Nothing Style Matrix Telemetry Header
+        renderNothingTelemetryOverlay(canvas)
+        renderNeonParticles(canvas)
+    }
+
+    private fun renderWaterBeadContainer(canvas: Canvas) {
+        val waterLine = height * 0.32f
+        val time = globalTimeSec
+
+        // Draw Water Fill Fluid
+        wavePath.reset()
+        wavePath.moveTo(20f, height.toFloat())
+        wavePath.lineTo(20f, waterLine)
+
+        var x = 20f
+        val step = 20f
+        while (x <= width - 20f) {
+            var y = waterLine + sin(x * 0.01f + time * 3f) * 12f + cos(x * 0.02f - time * 2f) * 6f
+
+            // Ripple reaction on water surface
+            for (r in ripples) {
+                if (r.active) {
+                    val dist = abs(x - r.x)
+                    if (dist < 150f) {
+                        y += sin(dist * 0.05f + time * 5f) * (1f - dist / 150f) * r.alpha * 25f
+                    }
+                }
+            }
+
+            wavePath.lineTo(x, y)
+            x += step
+        }
+
+        wavePath.lineTo(width - 20f, height.toFloat())
+        wavePath.close()
+
+        // Container Fluid Gradient Fill
+        val liquidGradient = LinearGradient(
+            0f, waterLine, 0f, height.toFloat(),
+            intArrayOf(0x7700F0FF.toInt(), 0xAA0A1128.toInt(), 0xEE000000.toInt()),
+            floatArrayOf(0f, 0.4f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        gridPaint.style = Paint.Style.FILL
+        gridPaint.shader = liquidGradient
+        canvas.drawPath(wavePath, gridPaint)
+        gridPaint.shader = null
+
+        // Render Water Surface Wave Highlight
+        linePaint.color = 0xFF00F0FF.toInt()
+        linePaint.strokeWidth = 3f
+        canvas.drawPath(wavePath, linePaint)
+
+        // Glass Container Outer Border Frame
+        linePaint.color = 0x88FFFFFF.toInt()
+        linePaint.strokeWidth = 2f
+        canvas.drawRect(20f, 80f, width - 20f, height - 40f, linePaint)
+
+        // Render Water Beads
+        val count = config.unlockCount.coerceIn(1, maxBeads)
+        for (i in 0 until count) {
+            val b = waterBeads[i]
+            particlePaint.color = b.color
+            particlePaint.alpha = 230
+
+            // Glowing Outer Bead Aura
+            val glowRadius = b.radius * (1.5f + sin(b.phase) * 0.2f)
+            particlePaint.color = b.color
+            particlePaint.alpha = 90
+            canvas.drawCircle(b.x, b.y, glowRadius, particlePaint)
+
+            // Inner Core Bead
+            particlePaint.color = Color.WHITE
+            particlePaint.alpha = 240
+            canvas.drawCircle(b.x, b.y, b.radius * 0.6f, particlePaint)
+        }
+
+        // Nothing OS Container Stats Overlay
+        renderNothingTelemetryOverlay(canvas)
+    }
+
+    private fun renderPaintingCanvas(canvas: Canvas) {
+        // Render neon paint particles with connected paths
+        renderNeonParticles(canvas)
+
+        // Render Nothing Telemetry
+        renderNothingTelemetryOverlay(canvas)
+    }
+
+    private fun renderNothingTelemetryOverlay(canvas: Canvas) {
+        // Draw Dot Matrix Telemetry Text
+        val startMs = config.trackedTimeStartMs
+        val elapsedSec = ((System.currentTimeMillis() - startMs) / 1000L).coerceAtLeast(0L)
+        val hours = elapsedSec / 3600
+        val mins = (elapsedSec % 3600) / 60
+
+        textPaint.color = Color.WHITE
+        textPaint.textSize = 28f
+        textPaint.isFakeBoldText = true
+
+        val margin = 50f
+        var topY = 130f
+
+        // Nothing Header Tag
+        textPaint.color = 0xFFFF0037.toInt() // Nothing Red
+        canvas.drawText("● NT-OS // PHYSICAL SIMULATOR", margin, topY, textPaint)
+
+        topY += 42f
+        textPaint.color = 0xCCFFFFFF.toInt()
+        canvas.drawText("UNLOCK BEADS : [ ${config.unlockCount} ]", margin, topY, textPaint)
+
+        topY += 38f
+        textPaint.color = 0xAA888888.toInt()
+        canvas.drawText("ACTIVE TIME   : [ ${hours}h ${mins}m ]", margin, topY, textPaint)
     }
 
     private fun drawBackground(canvas: Canvas) {

@@ -11,6 +11,14 @@ enum class ColorPreset(
     val accentSecondary: Int,
     val accentTertiary: Int
 ) {
+    NOTHING_MONO(
+        title = "Nothing Monochrome",
+        bgPrimary = 0xFF000000.toInt(),
+        bgSecondary = 0xFF0B0B0B.toInt(),
+        accentPrimary = 0xFFFFFFFF.toInt(), // Glyph White
+        accentSecondary = 0xFFFF0037.toInt(), // Signature Nothing Red
+        accentTertiary = 0xFF777777.toInt()  // Dot Matrix Gray
+    ),
     CYBERPUNK(
         title = "Cyberpunk Neon",
         bgPrimary = 0xFF0A0E17.toInt(),
@@ -54,6 +62,9 @@ enum class ColorPreset(
 }
 
 enum class EffectMode(val title: String, val description: String) {
+    NOTHING_MATRIX("Nothing Matrix", "Reactive LED dot-matrix grid with glyph waves and red pulses"),
+    WATER_BEAD_CONTAINER("Water Bead Container", "Fluid container where each unlock adds a floating glowing water bead"),
+    PAINTING_CANVAS("Painting Canvas", "Interactive glowing stroke canvas with touch-drag synthesis"),
     QUANTUM_GRID("Quantum Grid", "Distortable holographic grid mesh with reactive shockwaves"),
     NEON_PARTICLES("Neon Particles", "Floating particle constellation with multi-touch gravitational field"),
     AURORA_FLOW("Aurora Flow", "Procedural wave ribbons with interactive vortex swirls"),
@@ -61,8 +72,8 @@ enum class EffectMode(val title: String, val description: String) {
 }
 
 data class WallpaperConfig(
-    val colorPreset: ColorPreset = ColorPreset.CYBERPUNK,
-    val effectMode: EffectMode = EffectMode.QUANTUM_GRID,
+    val colorPreset: ColorPreset = ColorPreset.NOTHING_MONO,
+    val effectMode: EffectMode = EffectMode.NOTHING_MATRIX,
     val particleCount: Int = 120,
     val speedScale: Float = 1.0f,
     val rippleIntensity: Float = 1.0f,
@@ -71,7 +82,10 @@ data class WallpaperConfig(
     val showTouchTrails: Boolean = true,
     val enableWebConnections: Boolean = true,
     val zeroGravityMode: Boolean = false,
-    val enableHaptics: Boolean = true
+    val enableHaptics: Boolean = true,
+    val paintingMode: Boolean = false,
+    val unlockCount: Int = 0,
+    val trackedTimeStartMs: Long = System.currentTimeMillis()
 )
 
 object WallpaperSettingsStore {
@@ -88,6 +102,9 @@ object WallpaperSettingsStore {
     private const val KEY_WEB_CONNECTIONS = "web_connections"
     private const val KEY_ZERO_GRAVITY = "zero_gravity"
     private const val KEY_ENABLE_HAPTICS = "enable_haptics"
+    private const val KEY_PAINTING_MODE = "painting_mode"
+    private const val KEY_UNLOCK_COUNT = "unlock_count"
+    private const val KEY_TRACKED_TIME_START = "tracked_time_start"
 
     fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -95,11 +112,17 @@ object WallpaperSettingsStore {
 
     fun loadConfig(context: Context): WallpaperConfig {
         val prefs = getPrefs(context)
-        val presetOrdinal = prefs.getInt(KEY_COLOR_PRESET, ColorPreset.CYBERPUNK.ordinal)
-        val effectOrdinal = prefs.getInt(KEY_EFFECT_MODE, EffectMode.QUANTUM_GRID.ordinal)
+        val presetOrdinal = prefs.getInt(KEY_COLOR_PRESET, ColorPreset.NOTHING_MONO.ordinal)
+        val effectOrdinal = prefs.getInt(KEY_EFFECT_MODE, EffectMode.NOTHING_MATRIX.ordinal)
 
-        val preset = ColorPreset.values().getOrElse(presetOrdinal) { ColorPreset.CYBERPUNK }
-        val effect = EffectMode.values().getOrElse(effectOrdinal) { EffectMode.QUANTUM_GRID }
+        val preset = ColorPreset.values().getOrElse(presetOrdinal) { ColorPreset.NOTHING_MONO }
+        val effect = EffectMode.values().getOrElse(effectOrdinal) { EffectMode.NOTHING_MATRIX }
+
+        var startMs = prefs.getLong(KEY_TRACKED_TIME_START, 0L)
+        if (startMs <= 0L) {
+            startMs = System.currentTimeMillis()
+            prefs.edit().putLong(KEY_TRACKED_TIME_START, startMs).apply()
+        }
 
         return WallpaperConfig(
             colorPreset = preset,
@@ -112,7 +135,10 @@ object WallpaperSettingsStore {
             showTouchTrails = prefs.getBoolean(KEY_TOUCH_TRAILS, true),
             enableWebConnections = prefs.getBoolean(KEY_WEB_CONNECTIONS, true),
             zeroGravityMode = prefs.getBoolean(KEY_ZERO_GRAVITY, false),
-            enableHaptics = prefs.getBoolean(KEY_ENABLE_HAPTICS, true)
+            enableHaptics = prefs.getBoolean(KEY_ENABLE_HAPTICS, true),
+            paintingMode = prefs.getBoolean(KEY_PAINTING_MODE, false),
+            unlockCount = prefs.getInt(KEY_UNLOCK_COUNT, 1),
+            trackedTimeStartMs = startMs
         )
     }
 
@@ -129,6 +155,24 @@ object WallpaperSettingsStore {
             .putBoolean(KEY_WEB_CONNECTIONS, config.enableWebConnections)
             .putBoolean(KEY_ZERO_GRAVITY, config.zeroGravityMode)
             .putBoolean(KEY_ENABLE_HAPTICS, config.enableHaptics)
+            .putBoolean(KEY_PAINTING_MODE, config.paintingMode)
+            .putInt(KEY_UNLOCK_COUNT, config.unlockCount)
+            .putLong(KEY_TRACKED_TIME_START, config.trackedTimeStartMs)
+            .apply()
+    }
+
+    fun incrementUnlockCount(context: Context): Int {
+        val prefs = getPrefs(context)
+        val current = prefs.getInt(KEY_UNLOCK_COUNT, 0)
+        val updated = current + 1
+        prefs.edit().putInt(KEY_UNLOCK_COUNT, updated).apply()
+        return updated
+    }
+
+    fun resetUnlockStats(context: Context) {
+        getPrefs(context).edit()
+            .putInt(KEY_UNLOCK_COUNT, 0)
+            .putLong(KEY_TRACKED_TIME_START, System.currentTimeMillis())
             .apply()
     }
 }
