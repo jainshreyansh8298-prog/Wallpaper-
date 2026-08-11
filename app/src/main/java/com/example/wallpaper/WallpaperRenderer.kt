@@ -629,11 +629,7 @@ class WallpaperRenderer {
     }
 
     private fun renderNothingTelemetryOverlay(canvas: Canvas) {
-        // Draw Dot Matrix Telemetry Text
-        val startMs = config.trackedTimeStartMs
-        val elapsedSec = ((System.currentTimeMillis() - startMs) / 1000L).coerceAtLeast(0L)
-        val hours = elapsedSec / 3600
-        val mins = (elapsedSec % 3600) / 60
+        val celestial = com.example.celestial.CelestialManager.getCelestialInfo()
 
         textPaint.color = Color.WHITE
         textPaint.textSize = 28f
@@ -642,17 +638,20 @@ class WallpaperRenderer {
         val margin = 50f
         var topY = 130f
 
-        // Nothing Header Tag
+        // Nothing Header Tag with Celestial Moon Phase
         textPaint.color = 0xFFFF0037.toInt() // Nothing Red
-        canvas.drawText("● NT-OS // PHYSICAL SIMULATOR", margin, topY, textPaint)
+        canvas.drawText("● ${celestial.timeOfDay.iconSymbol} ${celestial.timeOfDay.label.uppercase()} // ${celestial.moonPhase.symbol} ${celestial.moonPhase.phaseName.uppercase()}", margin, topY, textPaint)
 
         topY += 42f
         textPaint.color = 0xCCFFFFFF.toInt()
-        canvas.drawText("UNLOCK BEADS : [ ${config.unlockCount} ]", margin, topY, textPaint)
+        canvas.drawText("UNLOCK BEADS : [ ${config.unlockCount} ] • ILLUM : ${celestial.illuminationPercent}%", margin, topY, textPaint)
 
         topY += 38f
+        val elapsedSec = ((System.currentTimeMillis() - config.trackedTimeStartMs) / 1000L).coerceAtLeast(0L)
+        val hours = elapsedSec / 3600
+        val mins = (elapsedSec % 3600) / 60
         textPaint.color = 0xAA888888.toInt()
-        canvas.drawText("ACTIVE TIME   : [ ${hours}h ${mins}m ]", margin, topY, textPaint)
+        canvas.drawText("ACTIVE SOT   : [ ${hours}h ${mins}m ]", margin, topY, textPaint)
     }
 
     private fun drawBackground(canvas: Canvas) {
