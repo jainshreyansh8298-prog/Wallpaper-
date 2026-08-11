@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Radiant Solar Noon Core -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,32 A22,22 0 1,1 53.9,32 Z" />
+    <!-- Radiant Corona Rays -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M54,16 L54,24 M54,84 L54,92 M16,54 L24,54 M84,54 L92,54 M27,27 L33,33 M81,81 L75,75 M27,81 L33,75 M81,27 L75,33" />
+</vector>

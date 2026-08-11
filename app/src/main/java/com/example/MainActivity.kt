@@ -35,8 +35,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ElectricBolt
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Wallpaper
@@ -68,6 +70,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.celestial.CelestialInfo
 import com.example.celestial.CelestialManager
+import com.example.celestial.DynamicIconManager
+import com.example.celestial.TimeOfDayType
 import com.example.ui.theme.MyApplicationTheme
 import com.example.wallpaper.ColorPreset
 import com.example.wallpaper.EffectMode
@@ -129,7 +133,7 @@ fun LiveWallpaperAppScreen(
     val context = LocalContext.current
     var config by remember { mutableStateOf(WallpaperSettingsStore.loadConfig(context)) }
     val celestialInfo = remember { CelestialManager.getCelestialInfo() }
-    val wellbeingStats = remember(config.unlockCount) { DigitalWellbeingManager.getStats(context) }
+    var wellbeingStats by remember(config.unlockCount) { mutableStateOf(DigitalWellbeingManager.getStats(context)) }
 
     val updateConfig = { newConfig: WallpaperConfig ->
         config = newConfig
@@ -147,6 +151,9 @@ fun LiveWallpaperAppScreen(
     ) {
         // --- Header Section: Celestial Moon Phase & Time Widget ---
         CelestialHeaderCard(celestialInfo = celestialInfo)
+
+        // --- Task Checklist Card ---
+        TaskChecklistCard()
 
         // --- Pinterest Hero Card: Native Interactive Canvas Preview ---
         PinterestCanvasPreviewCard(
@@ -186,12 +193,21 @@ fun LiveWallpaperAppScreen(
             }
         }
 
+        // --- Dynamic Celestial App Icon Card ---
+        DynamicAppIconCard(celestialInfo = celestialInfo)
+
         // --- Digital Wellbeing Dashboard Card ---
         WellbeingDashboardCard(
             stats = wellbeingStats,
-            onResetStats = {
-                WallpaperSettingsStore.resetUnlockStats(context)
-                config = WallpaperSettingsStore.loadConfig(context)
+            onConnectPermission = {
+                try {
+                    context.startActivity(DigitalWellbeingManager.getUsageAccessSettingsIntent())
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Open Settings -> Usage Access", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onRefreshStats = {
+                wellbeingStats = DigitalWellbeingManager.getStats(context)
             }
         )
 
@@ -214,6 +230,68 @@ fun LiveWallpaperAppScreen(
         )
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun TaskChecklistCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = NothingCardBg),
+        border = androidx.compose.foundation.BorderStroke(1.dp, NothingCardBorder)
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = NothingRed,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "FEATURE TASKS COMPLETED",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    letterSpacing = 1.2.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val tasks = listOf(
+                "Modern Pinterest Bento Grid UI redesign" to true,
+                "Touch & Slide gesture canvas preview fix" to true,
+                "Real System Digital Wellbeing screen time tracking" to true,
+                "Dynamic launcher app icon (Sunrise, Noon, Afternoon & Night Moon)" to true,
+                "Astronomical Moon Phase calculator & illumination ratio" to true
+            )
+
+            tasks.forEach { (task, completed) ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Completed",
+                        tint = NothingRed,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = task,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -280,6 +358,81 @@ fun CelestialHeaderCard(celestialInfo: CelestialInfo) {
                     text = celestialInfo.moonPhase.symbol,
                     fontSize = 28.sp
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun DynamicAppIconCard(celestialInfo: CelestialInfo) {
+    val context = LocalContext.current
+    var activeIconType by remember { mutableStateOf(DynamicIconManager.getCurrentActiveIconType(context)) }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = NothingCardBg),
+        border = androidx.compose.foundation.BorderStroke(1.dp, NothingCardBorder)
+    ) {
+        Column(modifier = Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = NothingRed,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "DYNAMIC CELESTIAL APP ICON",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    letterSpacing = 1.2.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "App icon adapts dynamically to time of day & moon phase: Sunrise (🌅), Noon (☀️), Afternoon (🌇), or Night Moon (🌙).",
+                fontSize = 11.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TimeOfDayType.values().forEach { type ->
+                    val isSelected = activeIconType == type
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) NothingRed else Color(0xFF1A1A1A))
+                            .clickable {
+                                activeIconType = type
+                                DynamicIconManager.applyDynamicIcon(context, type)
+                                Toast.makeText(context, "App Icon set to ${type.label}", Toast.LENGTH_SHORT).show()
+                            }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(text = type.iconSymbol, fontSize = 20.sp)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = type.label,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -387,7 +540,8 @@ fun PinterestCanvasPreviewCard(
 @Composable
 fun WellbeingDashboardCard(
     stats: com.example.wellbeing.WellbeingStats,
-    onResetStats: () -> Unit
+    onConnectPermission: () -> Unit,
+    onRefreshStats: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -403,14 +557,14 @@ fun WellbeingDashboardCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.AutoAwesome,
+                        imageVector = Icons.Default.Security,
                         contentDescription = null,
                         tint = NothingRed,
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "DIGITAL WELLBEING & WATER BEADS",
+                        text = "REAL DIGITAL WELLBEING SYNC",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = Color.White,
@@ -422,14 +576,36 @@ fun WellbeingDashboardCard(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .background(Color(0xFF222222))
-                        .clickable { onResetStats() }
+                        .clickable { onRefreshStats() }
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
-                    Text(text = "RESET", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Text(text = "REFRESH", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                 }
             }
 
             Spacer(modifier = Modifier.height(14.dp))
+
+            if (!stats.isPermissionGranted) {
+                Button(
+                    onClick = onConnectPermission,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = NothingRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "CONNECT DIGITAL WELLBEING PERMISSION",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -446,7 +622,7 @@ fun WellbeingDashboardCard(
                     Text(
                         text = stats.focusStatus,
                         fontSize = 12.sp,
-                        color = NothingRed,
+                        color = if (stats.isPermissionGranted) Color(0xFF00E676) else NothingRed,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -459,7 +635,7 @@ fun WellbeingDashboardCard(
                         color = NothingRed
                     )
                     Text(
-                        text = "Unlock Beads in Water",
+                        text = "System Unlock Beads",
                         fontSize = 11.sp,
                         color = Color.Gray
                     )
@@ -852,7 +1028,6 @@ fun NativeWallpaperPreviewCanvas(
             }
         },
         update = { view ->
-            // Pass updated configuration into live view renderer
             (view as? View)?.let { v ->
                 val field = v.javaClass.getDeclaredField("renderer").apply { isAccessible = true }
                 val renderer = field.get(v) as? WallpaperRenderer

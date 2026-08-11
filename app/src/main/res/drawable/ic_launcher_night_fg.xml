@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Crescent Moon Silhouette -->
+    <path
+        android:fillColor="#FFD000"
+        android:pathData="M58,24 C40.3,24 26,38.3 26,56 C26,73.7 40.3,88 58,88 C68.4,88 77.5,83 83.2,75.3 C69.8,75.3 59,64.5 59,51.1 C59,38.8 68.2,28.6 80.3,26.7 C73.6,25 66.2,24 58,24 Z" />
+    <!-- Celestial Stars -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,28 L34,32 L38,34 L34,36 L32,40 L30,36 L26,34 L30,32 Z M78,32 L79.5,35 L82.5,36.5 L79.5,38 L78,41 L76.5,38 L73.5,36.5 L76.5,35 Z M36,72 L37,74 L39,75 L37,76 L36,78 L35,76 L33,75 L35,74 Z" />
+</vector>
